@@ -71,7 +71,7 @@ def classify_number():
     number = request.args.get('number')
     if not number or not number.isdigit():
         return jsonify({
-            "number": "alpahbet",
+            "number": "alphabet",
             "error": True
         }), 400
 
