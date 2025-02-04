@@ -62,10 +62,9 @@ def classify_number():
     # Get the number parameter from the query string
     number = request.args.get('number')
 
-    if not number:  # or (not number.lstrip('-').isdigit() and not is_float(number)):  # not number.isdigit():
+    if not number:  
         data = {
-            # "number": "alphabet",
-            "error": True  # myStr
+            "error": True 
         }
         return jsonify(data), 400
 
@@ -91,7 +90,7 @@ def classify_number():
     api_url = f"http://numbersapi.com/{number}/math?json"
     try:
         response = requests.get(api_url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
         data = response.json()
         # print(data)
         fun_fact = data.get("text", "")
@@ -125,5 +124,5 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
-    port = int(environ.get("PORT", 5000))  # Default to 5000 if not provided
-    app.run(host="0.0.0.0", port=port, debug=True)  # Listen on all interfaces (0.0.0.0) and use the specified port
+    port = int(environ.get("PORT", 5000))  
+    app.run(host="0.0.0.0", port=port, debug=True) 
