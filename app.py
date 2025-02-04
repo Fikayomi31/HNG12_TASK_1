@@ -1,108 +1,129 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from os import environ
 import requests
-from collections import OrderedDict
 
 app = Flask(__name__)
+CORS(app) 
 
-# Enable CORS
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET')
-    return response
+# Sorting key for Flask's JSON encoder 
+app.json.sort_keys = False
 
-# Helper function to check whether the digit is prime number or not
+
 def is_prime(n):
-    if n <= 1:
+    """
+    Helper function to check if a number is prime.
+    """
+    if n < 2:
         return False
-    if n == 2:
-        return True
-    if n % 2 == 0:
-        return False
-    for i in range(3, int(n**0.5) + 1, 2):
+    for i in range(2, int(n ** 0.5) + 1):
         if n % i == 0:
             return False
     return True
 
-# Helper function to check whether the digit is perfect number
+
 def is_perfect(n):
-    if n <= 1:
+    """
+    Helper function to check if a number is perfect.
+    """
+    if n < 1:
         return False
-    divisors_sum = 1
-    for i in range(2, int(n**0.5) + 1):
-        if n % i == 0:
-            divisors_sum += i
-            if i != n // i:
-                divisors_sum += n // i
-    return divisors_sum == n
+    divisors = [i for i in range(1, n) if n % i == 0]
+    return sum(divisors) == n
 
 
-# Helper function to check whether the digit is armstrong 
 def is_armstrong(n):
-    digits = [int(d) for d in str(n)]
-    length = len(digits)
-    return sum(d**length for d in digits) == n
-
-# Helper function to get the digit sum
-def get_digit_sum(n):
-    return sum(int(d) for d in str(n))
-
-# Helper to check whether the digit is odd or even 
-def get_parity(n):
-    return "odd" if n % 2 else "even"
-
-# function for the fun fact 
-def get_fun_fact(n):
-    if is_armstrong(n):
-        digits = [int(d) for d in str(n)]
-        length = len(digits)
-        explanation = " + ".join(f"{d}^{length}" for d in digits)
-        return f"{n} is an Armstrong number because {explanation} = {n}"
-    else:
-        url = f"http://numbersapi.com/{n}/math"
-        response = requests.get(url)
-        return response.text if response.status_code == 200 else "No fun fact available."
+    """
+    Helper function to check if a number is an Armstrong number.
+    """
+    if n < 0:
+        return False
+    digits = str(n)
+    power = len(digits)
+    return sum(int(digit) ** power for digit in digits) == n
 
 
-# API endpoint
+
+def digit_sum(n):
+    """
+    Helper function to calculate the sum of the digits of a number.
+    """
+    return sum(int(digit) for digit in str(abs(n)))
+
+
 @app.route('/api/classify-number', methods=['GET'])
 def classify_number():
+    """
+    Checks the mathematical properties of a number,
+    and returns a JSON response containing the number,
+    its properties, and a fun fact about the number
+    from the Numbers API.
+    """
+    # Get the number parameter from the query string
     number = request.args.get('number')
-    if not number or not number.isdigit():
+
+    if not number:  # or (not number.lstrip('-').isdigit() and not is_float(number)):  # not number.isdigit():
+        data = {
+            # "number": "alphabet",
+            "error": True  # myStr
+        }
+        return jsonify(data), 400
+
+
+    try:
+        number = int(number)
+    except ValueError:
         return jsonify({
             "number": "alphabet",
-            "error": True
-        }), 400
+            "error": True}
+        ), 400
 
-    number = int(number)
+    armstrong = is_armstrong(number)
+    parity = "odd" if number % 2 != 0 else "even"
+    
+    # Checking for Armstrong properties and parity
     properties = []
-
-    # Check if the number is an Armstrong number
-    if is_armstrong(number):
+    if armstrong:
         properties.append("armstrong")
-
-    # Add parity (odd/even)
-    parity = get_parity(number)
     properties.append(parity)
 
-    # Ensure properties adhere to the specified combinations
-    if "armstrong" not in properties:
-        properties = [parity]
-        
+    # Fetch the fun fact from the Numbers API using the math endpoint
+    api_url = f"http://numbersapi.com/{number}/math?json"
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()
+        # print(data)
+        fun_fact = data.get("text", "")
+    except Exception as e:
+        fun_fact = f"Could not retrieve fun fact: {str(e)}"
 
-    # Create an ordered dictionary for the response
-    response_data = OrderedDict([
-        ("number", number),
-        ("is_prime", is_prime(number)),
-        ("is_perfect", is_perfect(number)),
-        ("properties", properties),
-        ("digit_sum", get_digit_sum(number)),
-        ("fun_fact", get_fun_fact(number)),
-    ])
+    # the JSON response
+    data = {
+        "number": number,
+        "is_prime": is_prime(number),
+        "is_perfect": is_perfect(number),
+        "properties": properties,
+        "digit_sum": digit_sum(number),
+        "fun_fact": fun_fact
+    }
+    return jsonify(data), 200  
 
-    return jsonify(response_data), 200
 
-# Run the app
-if __name__ == '__main__':
-    app.run(debug=True)
+# Handling error pages and wrong redirections
+@app.errorhandler(404)
+def page_not_found(e):
+    """
+    Returns an error message in JSON
+    """
+    
+    data = {
+        "number": "alphabet",
+        "error": True  # myStr
+    }
+    return jsonify(data), 404
+
+
+if __name__ == "__main__":
+    port = int(environ.get("PORT", 5000))  # Default to 5000 if not provided
+    app.run(host="0.0.0.0", port=port, debug=True)  # Listen on all interfaces (0.0.0.0) and use the specified port
