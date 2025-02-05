@@ -33,20 +33,27 @@ def is_perfect(n):
     """
     Helper function to check if a number is perfect.
     """
-    if n < 1:
+    if n < 2:
         return False
+    # it collect i when i is == 0
     divisors = [i for i in range(1, n) if n % i == 0]
+    # sum all the divisors collected in the [] and return True if it == n
     return sum(divisors) == n
 
 
 def is_armstrong(n):
     """
     Helper function to check if a number is an Armstrong number.
+    
     """
     if n < 0:
         return False
+    # convert the number to a str 
     digits = str(n)
     power = len(digits)
+    """loop through each digit convert it to int square it by the power
+    and check if it == to the number itself
+    """
     return sum(int(digit) ** power for digit in digits) == n
 
 
@@ -54,7 +61,9 @@ def is_armstrong(n):
 def digit_sum(n):
     """
     Helper function to calculate the sum of the digits of a number.
+    Convert the number to absolute and str we loop  it and sum it all
     """
+    
     return sum(int(digit) for digit in str(abs(n)))
 
 
@@ -68,14 +77,6 @@ def classify_number():
     """
     # Get the number parameter from the query string
     number = request.args.get('number')
-
-    if not number:  
-        data = {
-            "error": True 
-        }
-        return jsonify(data), 400
-
-
     try:
         number = int(number)
     except ValueError:
@@ -85,6 +86,7 @@ def classify_number():
         ), 400
 
     armstrong = is_armstrong(number)
+    # for odd or even
     parity = "odd" if number % 2 != 0 else "even"
     
     # Checking for Armstrong properties and parity
