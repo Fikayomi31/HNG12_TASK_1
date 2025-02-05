@@ -14,8 +14,15 @@ def is_prime(n):
     """
     Helper function to check if a number is prime.
     """
-    if n < 2:
+    if n <= 1 or n % 2 == 0:
         return False
+    """
+    int(n ** 0) + 1 mean square of n and only the int whole number
+    will be used  and add will 1
+    example int(10 ** 0.5) + 1 = 4
+    the loop with be for i in range(2, 4), start from 2 to 4
+    if 10 %  2 == 0 so it return False 
+    """
     for i in range(2, int(n ** 0.5) + 1):
         if n % i == 0:
             return False
