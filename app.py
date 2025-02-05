@@ -61,7 +61,7 @@ def is_armstrong(n):
 def digit_sum(n):
     """
     Helper function to calculate the sum of the digits of a number.
-    Convert the number to absolute and str we loop  it and sum it all
+    Convert the number to absolute and str we loop  it and sum
     """
     
     return sum(int(digit) for digit in str(abs(n)))
@@ -77,6 +77,7 @@ def classify_number():
     """
     # Get the number parameter from the query string
     number = request.args.get('number')
+
     try:
         number = int(number)
     except ValueError:
@@ -86,7 +87,7 @@ def classify_number():
         ), 400
 
     armstrong = is_armstrong(number)
-    # for odd or even
+    # checking for odd and even
     parity = "odd" if number % 2 != 0 else "even"
     
     # Checking for Armstrong properties and parity
